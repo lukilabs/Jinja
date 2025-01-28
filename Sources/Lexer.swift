@@ -139,24 +139,31 @@ struct PreprocessOptions {
 }
 
 func preprocess(template: String, options: PreprocessOptions = PreprocessOptions()) -> String {
-    var template = template
-    if template.hasSuffix("\n") {
-        template.removeLast()
+    if #available(iOS 16.0, macCatalyst 16.0, *) {
+        var template = template
+        if template.hasSuffix("\n") {
+            template.removeLast()
+        }
+        
+        template = template.replacing(#/{#.*?#}/#, with: "{##}")
+        
+        if options.lstripBlocks == true {
+            template = template.replacing(#/(?m)^[ \t]*({[#%])/#, with: { $0.output.1 })
+        }
+        if options.trimBlocks == true {
+            template = template.replacing(#/([#%]})\n/#, with: { $0.output.1 })
+        }
+        return
+            template
+            .replacing(#/{##}/#, with: "")
+            .replacing(#/-%}\s*/#, with: "%}")
+            .replacing(#/\s*{%-/#, with: "{%")
+            .replacing(#/-}}\s*/#, with: "}}")
+            .replacing(#/\s*{{-/#, with: "{{")
+    } else {
+        // Fallback on earlier versions
+        return template
     }
-    template = template.replacing(#/{#.*?#}/#, with: "{##}")
-    if options.lstripBlocks == true {
-        template = template.replacing(#/(?m)^[ \t]*({[#%])/#, with: { $0.output.1 })
-    }
-    if options.trimBlocks == true {
-        template = template.replacing(#/([#%]})\n/#, with: { $0.output.1 })
-    }
-    return
-        template
-        .replacing(#/{##}/#, with: "")
-        .replacing(#/-%}\s*/#, with: "%}")
-        .replacing(#/\s*{%-/#, with: "{%")
-        .replacing(#/-}}\s*/#, with: "}}")
-        .replacing(#/\s*{{-/#, with: "{{")
 }
 
 func tokenize(_ source: String, options: PreprocessOptions = PreprocessOptions()) throws -> [Token] {

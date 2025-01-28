@@ -1255,12 +1255,14 @@ class Environment {
 
             // Process each part and join them
             let result = parts.filter { !$0.isEmpty }.map { part -> String in
-                if part.matches(of: try! Regex(pattern)).isEmpty {
-                    // This is a word part, not a delimiter
-                    if let first = part.first {
-                        return String(first).uppercased() + part.dropFirst().lowercased()
+                if #available(iOS 16.0, macCatalyst 16.0, *) {
+                    if part.matches(of: try! Regex(pattern)).isEmpty {
+                        // This is a word part, not a delimiter
+                        if let first = part.first {
+                            return String(first).uppercased() + part.dropFirst().lowercased()
+                        }
+                        return part
                     }
-                    return part
                 }
                 // This is a delimiter, keep it as is
                 return part
